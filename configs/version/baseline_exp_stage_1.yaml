@@ -1,6 +1,8 @@
 defaults:
   - mapping: att_3
 
+Name: baseline_exp_stage_1
+
 Data:
   data directory: /workspace/data
 
@@ -72,13 +74,3 @@ Experiment:
     ddp backend: nccl
     logs directory: Results/baseline_exp_stage_1
     display period: 20
-
-Wandb:
-  enabled: true
-  account_key: '3bff8c661180b6af3727e36c470dd033e785414c'
-  run_offline: False
-  run:
-    name: 'baseline_exp_stage_1'
-    project: 'attributes'
-    tags: ['Experiment stages']
-    group: None

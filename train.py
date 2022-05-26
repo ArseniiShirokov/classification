@@ -26,7 +26,7 @@ import os
 
 
 class Trainer:
-    def __init__(self, rank: int, config: DictConfig, world_size: int) -> None:
+    def __init__(self, rank: int, config: DictConfig, wandb: DictConfig, world_size: int) -> None:
         # For JSD loss
         self.transform = get_aug(config['Transform'], 'train')
         self.attributes = [attribute['name'] for attribute in config['mapping']]
@@ -35,7 +35,7 @@ class Trainer:
         # if we want full reproducible, deterministic results
         if config['Parameters']['deterministic']:
             self._init_random_seed(42 + rank)
-        self._init_loggers(config)
+        self._init_loggers(config, wandb)
         self._init_training_params(config)
         self.train()
 
@@ -69,12 +69,12 @@ class Trainer:
         if self.val_iter:
             self.val_iter_len = len(self.val_iter)
 
-    def _init_loggers(self, config: DictConfig) -> None:
+    def _init_loggers(self, config: DictConfig, wandb: DictConfig) -> None:
         self.save_dir = config['Experiment']['logs directory']
         save_config(config)
         if self.rank == 0:
             self.logger = Logger(self.save_dir)
-            self.wandb = get_wandb_logger(config)
+            self.wandb = get_wandb_logger(wandb)
 
     def _init_criterion(self, config: DictConfig) -> None:
         weights = []
@@ -211,6 +211,7 @@ class Trainer:
 
 @hydra.main(version_base=None, config_path="configs", config_name="config")
 def start_train(cfg: DictConfig) -> None:
+    wandb = cfg['Wandb']
     cfg = cfg['version']
 
     # Create dir to save exps
@@ -229,7 +230,7 @@ def start_train(cfg: DictConfig) -> None:
     trainer = Trainer
     world_size = len(cfg['Parameters']['context device ids'])
     torch.multiprocessing.spawn(trainer,
-                                args=(cfg, world_size,),
+                                args=(cfg, wandb, world_size,),
                                 nprocs=world_size,
                                 join=True
                                 )

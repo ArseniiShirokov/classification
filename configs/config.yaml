@@ -1,4 +1,19 @@
 defaults:
+  - _self_
   - version: baseline_exp_stage_1
   - override /hydra/job_logging: none
   - override /hydra/hydra_logging: none
+
+hydra:
+  run:
+    dir: outputs/${version.Name}/${now:%Y-%m-%d_%H-%M-%S}
+
+Wandb:
+  enabled: false
+  account_key: '3bff8c661180b6af3727e36c470dd033e785414c'
+  run_offline: False
+  run:
+    name: ${version.Name}
+    project: 'attributes'
+    tags: ['Experiment stages']
+    group: None

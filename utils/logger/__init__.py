@@ -71,14 +71,13 @@ class WAndBLogger:
 
 
 def get_wandb_logger(config: DictConfig):
-    if not config['Wandb']['enabled']:
+    if not config['enabled']:
         return None
 
-    return WAndBLogger(config['Wandb']['account_key'],
-                       config['Wandb']['run_offline'],
-                       project=config['Wandb']['run']['project'],
-                       name=config['Wandb']['run']['name'],
-                       tags=config['Wandb']['run']['tags'],
-                       group=config['Wandb']['run']['group'],
-                       config=config,
+    return WAndBLogger(config['account_key'],
+                       config['run_offline'],
+                       project=config['run']['project'],
+                       name=config['run']['name'],
+                       tags=config['run']['tags'],
+                       group=config['run']['group'],
                        dir='logs')
