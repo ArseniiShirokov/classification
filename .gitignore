@@ -1,0 +1,8 @@
+__pycache__/
+*.py[cod]
+*$py.class
+Results/
+logs/
+data/
+outputs/
+.idea/

@@ -1,0 +1,84 @@
+defaults:
+  - mapping: att_3
+
+Data:
+  data directory: /workspace/data
+
+  train dataset: attributes_train
+  val dataset: val_att4_final_1_color_mapping
+  test datasets:
+    - name: metro_test_att4
+    - name: summer_test
+
+Model:
+  architecture:
+    name: Mbnet
+    freeze: false
+    init: ReID
+    activation type: prelu
+    output_type: 'Demography'
+    in_channels: 1280
+
+  oversampling:
+    train: False
+    test: False # TODO Now it is not working with true flag
+    val: False
+
+  test_time_mapping: ["Цвет одежды"]
+  thresholding: False
+
+  loss:
+    name: CrossEntropy
+    label smoothing: false
+    smoothing params: 0.1
+
+    weights: True
+    weight params:
+      min weight: 0.5
+      max weight: 10
+
+Transform:
+  use_jsd: false
+  name: 'fixed'
+  means: [0.485, 0.456, 0.406] # image net values
+  stds: [0.229, 0.224, 0.225] # image net values
+  input shape: [3, 200, 200]
+
+Parameters:
+  deterministic: true
+  batch size: 50
+  num epochs: 30
+  num workers: 6
+  initial learning rate: 1.e-3
+  scheduler:
+    mode: step
+    epoch step: 30
+    power: 0.1
+  weight decay: 5.e-4
+  weight decay weights only: False
+  context device ids:
+    - 0
+  amp: False
+  optimizer:
+    name: Ranger
+    init trainer:
+    params:
+      sma threshold: 4
+      inter iters: 5
+      alpha: 0.5
+
+
+Experiment:
+    ddp backend: nccl
+    logs directory: Results/baseline_exp_stage_1
+    display period: 20
+
+Wandb:
+  enabled: true
+  account_key: '3bff8c661180b6af3727e36c470dd033e785414c'
+  run_offline: False
+  run:
+    name: 'baseline_exp_stage_1'
+    project: 'attributes'
+    tags: ['Experiment stages']
+    group: None
