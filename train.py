@@ -202,7 +202,7 @@ class Trainer:
             -> Tuple[torch.Tensor, torch.Tensor]:
         with torch.cuda.amp.autocast(enabled=self.amp):
             if self.use_jsd:
-                with_jsd_att = self.config['Transform']['attributes']
+                with_jsd_att = self.config['Transform']['jsd']['attributes']
                 mask = [i for i, attribute in self.attributes if attribute in with_jsd_att]
                 return jsd_forward(self.model, data, labels, mask, self.criterion)
             else:
