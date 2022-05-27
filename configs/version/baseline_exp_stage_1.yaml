@@ -75,7 +75,7 @@ Parameters:
       sma threshold: 4
       inter iters: 5
       alpha: 0.5
-   ddp backend: nccl
+  ddp backend: nccl
 
 
 Experiment:
