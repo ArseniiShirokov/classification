@@ -21,6 +21,7 @@ def save_best_model(checkpoint_model, save_dir: str, epoch_num: int) -> None:
     checkpoint_model.load_state_dict(checkpoint["state_dict"])
     torch.save(checkpoint_model, dst_path)
 
+
 def save_config(config: DictConfig) -> None:
     save_filename = config['Experiment']['logs directory'] + '/config.json'
     with open(save_filename, 'w') as f:

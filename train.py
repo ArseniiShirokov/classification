@@ -55,6 +55,7 @@ class Trainer:
         self._init_optimizer(config)
 
         self.best_epoch = 0
+        self.current_best_loss = None
         self.save_dir = config['Experiment']["logs directory"]
         self.display_period = config['Experiment']['display period']
         self.device_ids = config['Parameters']['context device ids']
@@ -143,7 +144,7 @@ class Trainer:
         # Loop over epochs
         for epoch in range(self.start_epoch, self.end_epoch):
             tic_epoch = time.time()
-            self.train_epoch(epoch)
+            self._train_epoch(epoch)
             epoch_time = time.time() - tic_epoch
             self.log('Epoch: [{}] Total time: {:.3f} seconds'.format(
                 epoch, epoch_time))
@@ -155,10 +156,10 @@ class Trainer:
         # Stop if not stoped
         sys.exit(0)
 
-    def train_epoch(self, epoch: int) -> None:
+    def _train_epoch(self, epoch: int) -> None:
         # Init counters
         batch_time = AverageMeter()
-        losses = [AverageMeter() for _ in range(len(self.config['mapping']))]
+        losses = [AverageMeter() for _ in range(len(self.attributes))]
         # Training loop
         tic_batch = time.time()
         for i, batch in enumerate(self.train_iter):
@@ -183,10 +184,12 @@ class Trainer:
                          f'LR: {learning_rate:.6f}\n'
                          f'{log_losses(losses, self.attributes)}\n\n')
             self._wandb_log()
-        self._save_state(epoch)
+        self.validate(epoch)
+        if epoch == self.best_epoch:
+            self._save_state(epoch)
 
     def _train_step(self, data: torch.Tensor, labels: torch.Tensor) \
-            -> Tuple[torch.Tensor, torch.Tensor]:
+            -> Tuple[list, list]:
         # forward
         logits, loss = self._forward(data, labels)
         # backward
@@ -199,7 +202,7 @@ class Trainer:
         return logits, loss
 
     def _forward(self, data: torch.Tensor, labels: torch.Tensor) \
-            -> Tuple[torch.Tensor, torch.Tensor]:
+            -> Tuple[list, list]:
         with torch.cuda.amp.autocast(enabled=self.amp):
             if self.use_jsd:
                 with_jsd_att = self.config['Transform']['jsd']['attributes']
@@ -214,6 +217,36 @@ class Trainer:
         for i, _loss in enumerate(loss):
             loss_sum += _loss
         return loss_sum
+
+    # ================= Validation =================
+    def validate(self, epoch: int) -> float:
+        # Init counters
+        losses = [AverageMeter() for _ in range(len(self.attributes))]
+        # Val loop
+        for i, batch in enumerate(self.val_iter):
+            # Do val iteration
+            data, labels = batch
+            data.to(self.rank, non_blocking=True)
+            labels.squeeze().long().to(self.rank, non_blocking=True)
+            with torch.no_grad():
+                logits, loss = self._forward(data, labels)
+            for idx, _loss in enumerate(loss):
+                losses[idx].update(_loss.item(), self.total_batchsize)
+            torch.cuda.synchronize()
+        # Compute criterion for find best model
+        avg_loss = AverageMeter()
+        for k, loss in enumerate(losses):
+            avg_loss.update(loss.avg)
+            self._wandb_update_state({f'{self.attributes[k]}-val-loss': loss.avg})
+        # Update best epoch
+        if self.current_best_loss is None or avg_loss < self.current_best_loss:
+            self.current_best_loss = avg_loss
+            self.best_epoch = epoch
+        # log validation losses
+        self.log('#' * 18)
+        for i, loss in enumerate(losses):
+            f'ValLoss - {self.attributes[i]}: ({loss.avg:.3f})\n'
+        self.log('#' * 18)
 
 
 @hydra.main(version_base=None, config_path="configs", config_name="config")

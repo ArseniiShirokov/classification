@@ -5,7 +5,7 @@ import torch.nn.functional as F
 
 
 def simple_forward(model: nn.Module, data: torch.Tensor, labels: torch.Tensor, criterion: List[nn.Module]) \
-        -> Tuple[torch.Tensor, torch.Tensor]:
+        -> Tuple[list, list]:
     logits = model(data)
     loss = []
     for i, loss_function in enumerate(criterion):
@@ -15,7 +15,7 @@ def simple_forward(model: nn.Module, data: torch.Tensor, labels: torch.Tensor, c
 
 def jsd_forward(model: nn.Module, data: torch.Tensor, labels: torch.Tensor,
                 criterion: List[nn.Module], with_jsd_att: List[int]) \
-        -> Tuple[torch.Tensor, torch.Tensor]:
+        -> Tuple[list, list]:
     data_all = torch.chunk(data, data.size(1), dim=1)
     data_all = torch.squeeze(torch.cat(data_all, dim=0))
     logits_all = model(data_all)
