@@ -239,7 +239,7 @@ class Trainer:
             avg_loss.update(loss.avg)
             self._wandb_update_state({f'{self.attributes[k]}-val-loss': loss.avg})
         # Update best epoch
-        if self.current_best_loss is None or avg_loss < self.current_best_loss:
+        if self.current_best_loss is None or avg_loss.avg < self.current_best_loss:
             self.current_best_loss = avg_loss
             self.best_epoch = epoch
         # log validation losses
