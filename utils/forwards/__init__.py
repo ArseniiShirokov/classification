@@ -1,10 +1,10 @@
-from typing import Tuple
+from typing import Tuple, List
 from torch import nn
 import torch
 import torch.functional as F
 
 
-def simple_forward(model: nn.Module, data: torch.Tensor, labels: torch.Tensor, criterion: list[nn.Module]) \
+def simple_forward(model: nn.Module, data: torch.Tensor, labels: torch.Tensor, criterion: List[nn.Module]) \
         -> Tuple[torch.Tensor, torch.Tensor]:
     logits = model(data)
     loss = []
@@ -14,7 +14,7 @@ def simple_forward(model: nn.Module, data: torch.Tensor, labels: torch.Tensor, c
 
 
 def jsd_forward(model: nn.Module, data: torch.Tensor, labels: torch.Tensor,
-                criterion: list[nn.Module], with_jsd_att: list[int]) \
+                criterion: List[nn.Module], with_jsd_att: List[int]) \
         -> Tuple[torch.Tensor, torch.Tensor]:
     data_all = torch.chunk(data, data.size(1), dim=1)
     data_all = torch.squeeze(torch.cat(data_all, dim=0))
