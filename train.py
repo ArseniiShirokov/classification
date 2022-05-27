@@ -218,7 +218,8 @@ class Trainer:
         return loss_sum
 
     # ================= Validation =================
-    def validate(self, epoch: int) -> float:
+    def validate(self, epoch: int):
+        self.model.eval()
         self.log("Validation...")
         # Init counters
         losses = [AverageMeter() for _ in range(len(self.attributes))]
@@ -246,6 +247,7 @@ class Trainer:
         for i, loss in enumerate(losses):
             self.log(f'ValLoss - {self.attributes[i]}: ({loss.avg:.3f})\n')
         self.log('#' * 18)
+        self.model.train()
 
 
 @hydra.main(version_base=None, config_path="configs", config_name="config")
