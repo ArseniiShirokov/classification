@@ -175,7 +175,6 @@ class Trainer:
                 self._wandb_update_state({f'{attribute}-train-loss': loss[k].item()})
             if self.display_period and not (i + 1) % self.display_period:
                 learning_rate = self.scheduler.get_last_lr()[0]
-                torch.cuda.synchronize()
                 batch_time.update((time.time() - tic_batch) /
                                   self.display_period)
                 tic_batch = time.time()
@@ -233,7 +232,6 @@ class Trainer:
                 logits, loss = self._forward(data, labels)
             for idx, _loss in enumerate(loss):
                 losses[idx].update(_loss.item(), self.total_batchsize)
-            torch.cuda.synchronize()
         # Compute criterion for find best model
         avg_loss = AverageMeter()
         for k, loss in enumerate(losses):
@@ -241,7 +239,7 @@ class Trainer:
             self._wandb_update_state({f'{self.attributes[k]}-val-loss': loss.avg})
         # Update best epoch
         if self.current_best_loss is None or avg_loss.avg < self.current_best_loss:
-            self.current_best_loss = avg_loss
+            self.current_best_loss = avg_loss.avg
             self.best_epoch = epoch
         # log validation losses
         self.log('#' * 18)
