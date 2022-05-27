@@ -14,8 +14,9 @@ from utils.logger import Logger
 from utils.logger import save_module_state
 from utils.logger import save_best_model
 from typing import Tuple
+from utils.forwards import simple_forward
+from utils.forwards import jsd_forward
 import random
-from utils.augmentation import get_aug
 import shutil
 import numpy
 import hydra
@@ -27,8 +28,7 @@ import os
 
 class Trainer:
     def __init__(self, rank: int, config: DictConfig, wandb: DictConfig, world_size: int) -> None:
-        # For JSD loss
-        self.transform = get_aug(config['Transform'], 'train')
+        self.use_jsd = config['Transform']['jsd']['enabled']
         self.attributes = [attribute['name'] for attribute in config['mapping']]
         self.config = config
         self._init_ddp(rank, config, world_size)
@@ -43,7 +43,7 @@ class Trainer:
     def _init_ddp(self, rank: int, config: DictConfig, world_size: int) -> None:
         self.rank = rank
         self.world_size = world_size
-        dist.init_process_group(backend=config['Experiment']['ddp backend'],
+        dist.init_process_group(backend=config['Parameters']['ddp backend'],
                                 rank=self.rank,
                                 world_size=self.world_size)
 
@@ -188,10 +188,7 @@ class Trainer:
     def _train_step(self, data: torch.Tensor, labels: torch.Tensor) \
             -> Tuple[torch.Tensor, torch.Tensor]:
         # forward
-        logits = self.model(data)
-        loss = []
-        for i, loss_function in enumerate(self.criterion):
-            loss.append(loss_function(logits[i], labels[:, i].to(logits[i].device)))
+        logits, loss = self._forward(data, labels)
         # backward
         self.scaler.scale(self._sum_losses(loss)).backward()
         self.scaler.step(self.optimizer)
@@ -200,6 +197,16 @@ class Trainer:
         # update grad scaler
         self.scaler.update()
         return logits, loss
+
+    def _forward(self, data: torch.Tensor, labels: torch.Tensor) \
+            -> Tuple[torch.Tensor, torch.Tensor]:
+        with torch.cuda.amp.autocast(enabled=self.amp):
+            if self.use_jsd:
+                with_jsd_att = self.config['Transform']['attributes']
+                mask = [i for i, attribute in self.attributes if attribute in with_jsd_att]
+                return jsd_forward(self.model, data, labels, mask, self.criterion)
+            else:
+                return simple_forward(self.model, data, labels, self.criterion)
 
     @staticmethod
     def _sum_losses(loss: list) -> torch.Tensor:

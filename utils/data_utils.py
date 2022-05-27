@@ -16,7 +16,7 @@ def get_data_iterators(config: DictConfig) -> Tuple:
     simple_transform = get_aug(config['Transform'], 'test')
     # Create train dataset
     dataset_train = TrainDataset(config['Data']['data directory'] + '/' + config['Data']['train dataset'],
-                                 config['mapping'], config['Transform']['use_jsd'],
+                                 config['mapping'], config['Transform']['jsd']['enabled'],
                                  simple_transform=simple_transform, transform=transform_train)
     # Get sampler: oversampling or None
     train_sampler = get_sampler(config, dataset_train, 'train')
@@ -101,12 +101,17 @@ class TrainDataset(Dataset):
 
         image = self.simple_transform(image=img)
         image_aug1 = self.transform(image=img)
+        image_aug2 = self.transform(image=img)
+
         image = image['image']
         image_aug1 = image_aug1['image']
+        image_aug2 = image_aug2['image']
+
         image = torch.tensor(image, dtype=torch.float).permute((2, 0, 1))
         image_aug1 = torch.tensor(image_aug1, dtype=torch.float).permute((2, 0, 1))
+        image_aug2 = torch.tensor(image_aug2, dtype=torch.float).permute((2, 0, 1))
         if self.use_jsd:
-            return image, labels
+            return torch.stack([image, image_aug1, image_aug2]), labels
         else:
             return image_aug1, labels
 
