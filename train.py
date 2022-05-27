@@ -220,6 +220,7 @@ class Trainer:
 
     # ================= Validation =================
     def validate(self, epoch: int) -> float:
+        self.log("Validation...")
         # Init counters
         losses = [AverageMeter() for _ in range(len(self.attributes))]
         # Val loop
@@ -245,7 +246,7 @@ class Trainer:
         # log validation losses
         self.log('#' * 18)
         for i, loss in enumerate(losses):
-            f'ValLoss - {self.attributes[i]}: ({loss.avg:.3f})\n'
+            self.log(f'ValLoss - {self.attributes[i]}: ({loss.avg:.3f})\n')
         self.log('#' * 18)
 
 
