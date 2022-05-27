@@ -1,7 +1,7 @@
 from typing import Tuple, List
 from torch import nn
 import torch
-import torch.functional as F
+import torch.nn.functional as F
 
 
 def simple_forward(model: nn.Module, data: torch.Tensor, labels: torch.Tensor, criterion: List[nn.Module]) \
