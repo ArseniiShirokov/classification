@@ -253,12 +253,12 @@ class Trainer:
 @hydra.main(version_base=None, config_path="configs", config_name="config")
 def start_train(cfg: DictConfig) -> None:
     # Create dir to save exps
-    if os.path.exists(cfg['Experiment']['logs directory']):
+    if os.path.exists(cfg['version']['Experiment']['logs directory']):
         val = input("Warning! Dir is exists, continue? y/n \n")
         if val != 'y':
             return
-        shutil.rmtree(cfg['Experiment']['logs directory'])
-    os.makedirs(cfg['Experiment']['logs directory'])
+        shutil.rmtree(cfg['version']['Experiment']['logs directory'])
+    os.makedirs(cfg['version']['Experiment']['logs directory'])
 
     # Do some preparation stuff for DistributedDataParallel
     os.environ['MASTER_ADDR'] = 'localhost'
@@ -266,7 +266,7 @@ def start_train(cfg: DictConfig) -> None:
 
     # Start training
     trainer = Trainer
-    world_size = len(cfg['Parameters']['context device ids'])
+    world_size = len(cfg['version']['Parameters']['context device ids'])
     torch.multiprocessing.spawn(trainer,
                                 args=(cfg, world_size,),
                                 nprocs=world_size,
