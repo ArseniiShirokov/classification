@@ -77,10 +77,10 @@ class Evaluator:
                 for i, attribute in enumerate(self.attributes):
                     pr_label = torch.argmax(predictions[i].to(torch.device('cpu')), dim=1).tolist()
                     for j, val in enumerate(pr_label):
-                        outputs[j].append(val)
-                        gts[j].append(labels[j][i])
+                        outputs[j].append(val.item())
+                        gts[j].append(labels[j][i].item())
                 for i in outputs:
-                    row = list(map(str, outputs[i])) + list(map(str, gts[i]))
+                    row = outputs[i] + gts[i]
                     self.results[test_name].loc[len(self.results[test_name].index)] = row
             self.results[test_name].to_csv(f"{self.save_dir}/{test_name}.csv")
 
