@@ -23,6 +23,7 @@ class Evaluator:
         self.attributes = [attribute['name'] for attribute in self.config['mapping']]
         self._init_dataloader()
         self._init_model()
+        self._init_save_dataframe()
         self.evaluate()
 
     def _init_model(self):
