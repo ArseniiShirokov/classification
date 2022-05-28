@@ -71,7 +71,7 @@ class Trainer:
             self.val_iter_len = len(self.val_iter)
 
     def _init_loggers(self, config: DictConfig, wandb: DictConfig) -> None:
-        self.save_dir = self.config['Experiment']['logs directory']
+        self.save_dir = config['version']['Experiment']['logs directory']
         save_config(config)
         if self.rank == 0:
             self.logger = Logger(self.save_dir)
