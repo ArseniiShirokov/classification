@@ -49,7 +49,7 @@ Transform:
 Parameters:
   deterministic: true
   batch size: 50
-  num epochs: 5
+  num epochs: 1
   num workers: 6
   initial learning rate: 1.e-3
   scheduler:

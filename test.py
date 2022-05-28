@@ -59,7 +59,6 @@ class Evaluator:
                         self.config['Model']['Mapping']['test_time_mapping'],
                         [attribute['name'] for attribute in self.config['mapping']]
                     )
-        return
 
 
 @hydra.main(version_base=None, config_path="configs", config_name="config")

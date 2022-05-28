@@ -21,7 +21,7 @@ def save_best_model(checkpoint_model, save_dir: str, epoch_num: int) -> None:
     checkpoint = torch.load(params)
     checkpoint_model.load_state_dict(checkpoint["state_dict"])
     torch.save(checkpoint_model, dst_model_path)
-    save_module_state(checkpoint, dst_params_path)
+    save_module_state(checkpoint_model, dst_params_path)
 
 
 def save_config(config: DictConfig) -> None:
