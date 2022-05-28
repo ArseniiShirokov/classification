@@ -86,13 +86,15 @@ class Evaluator:
     def compute_metrics(self):
         for test_name in self.test_dataloaders:
             metrics = pd.DataFrame(columns=self.attributes)
+            row = []
             for attribute in self.attributes:
                 results = self.results[test_name]
                 local = results[results[f"{attribute}_gt"] != -1].copy()
                 pr_values = local[f"{attribute}_pr"].tolist()
                 gt_values = local[f"{attribute}_gt"].tolist()
                 m_acc = balanced_accuracy_score(gt_values, pr_values)
-                metrics[attribute] = m_acc
+                row.append(m_acc)
+            metrics.loc[len(metrics.index)] = row
             metrics.to_csv(f"{self.save_dir}/{test_name}_M-Acc.csv")
 
 
