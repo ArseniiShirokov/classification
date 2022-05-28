@@ -1,5 +1,5 @@
 from collections import defaultdict
-
+from sklearn.metrics import balanced_accuracy_score
 import hydra
 from omegaconf import DictConfig
 from utils.augmentation import get_aug
@@ -24,7 +24,6 @@ class Evaluator:
         self._init_dataloader()
         self._init_model()
         self._init_save_dataframe()
-        self.evaluate()
 
     def _init_model(self):
         self.model = get_model(self.config['Model']['architecture'], classes=self.config['mapping'])
@@ -84,10 +83,24 @@ class Evaluator:
                     self.results[test_name].loc[len(self.results[test_name].index)] = row
             self.results[test_name].to_csv(f"{self.save_dir}/{test_name}.csv")
 
+    def compute_metrics(self):
+        for test_name in self.test_dataloaders:
+            metrics = pd.DataFrame(columns=self.attributes)
+            for attribute in self.attributes:
+                results = self.results[test_name]
+                local = results[results[f"{attribute}_gt"] != -1].copy()
+                pr_values = local[f"{attribute}_pr"].tolist()
+                gt_values = local[f"{attribute}_gt"].tolist()
+                m_acc = balanced_accuracy_score(gt_values, pr_values)
+                metrics[attribute] = m_acc
+            metrics.to_csv(f"{self.save_dir}/{test_name}_M-Acc.csv")
+
 
 @hydra.main(version_base=None, config_path="configs", config_name="config")
 def start_test(cfg: DictConfig) -> None:
     tester = Evaluator(cfg)
+    tester.evaluate()
+    tester.compute_metrics()
 
 
 if __name__ == "__main__":
