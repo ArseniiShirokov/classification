@@ -23,7 +23,7 @@ def save_best_model(checkpoint_model, save_dir: str, epoch_num: int) -> None:
 
 
 def save_config(config: DictConfig) -> None:
-    save_filename = config['Experiment']['logs directory'] + '/config.json'
+    save_filename = config['version']['Experiment']['logs directory'] + '/config.json'
     with open(save_filename, 'w') as f:
         json.dump(OmegaConf.to_container(config), f, sort_keys=True, indent=4)
 
