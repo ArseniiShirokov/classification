@@ -1,3 +1,5 @@
+from collections import defaultdict
+
 import hydra
 from omegaconf import DictConfig
 from utils.augmentation import get_aug
@@ -8,6 +10,7 @@ from utils.test_time_mapping import mapping
 from tqdm import tqdm
 import torch
 import os
+import pandas as pd
 
 
 class Evaluator:
@@ -17,6 +20,7 @@ class Evaluator:
         self.datasets = config['Data']['test datasets']
         self.transform = get_aug(config['version']['Transform'], 'test')
         self.save_dir = config['version']['Experiment']['logs directory']
+        self.attributes = [attribute['name'] for attribute in self.config['mapping']]
         self._init_dataloader()
         self._init_model()
         self.evaluate()
@@ -28,6 +32,11 @@ class Evaluator:
         self.model.load_state_dict(checkpoint["state_dict"])
         self.model.cuda()
         self.model.eval()
+
+    def _init_save_dataframe(self):
+        columns = [f"{attribute}_pr" for attribute in self.attributes] + \
+                  [f"{attribute}_gt" for attribute in self.attributes]
+        self.results = pd.DataFrame(columns=columns, dtype=object)
 
     def _init_dataloader(self) -> None:
         self.test_dataloaders = {}
@@ -59,8 +68,19 @@ class Evaluator:
                     predictions = mapping(
                         predictions,
                         self.config['Model']['test_time_mapping'],
-                        [attribute['name'] for attribute in self.config['mapping']]
+                        self.attributes
                     )
+                outputs = defaultdict(list)
+                gts = defaultdict(list)
+                for i, attribute in enumerate(self.attributes):
+                    pr_label = torch.argmax(predictions[i].to(torch.device('cpu')), dim=1).tolist()
+                    for j, val in enumerate(pr_label):
+                        outputs[j].append(val)
+                        gts[j].append(labels[j][i])
+                for i in outputs:
+                    row = list(map(str, outputs[i])) + list(map(str, gts[i]))
+                    self.results.loc[len(self.results.index)] = row
+        self.results.to_csv(f"{self.save_dir}/results.csv")
 
 
 @hydra.main(version_base=None, config_path="configs", config_name="config")
