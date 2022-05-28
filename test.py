@@ -58,7 +58,7 @@ class Evaluator:
                     # Test-time mapping
                     predictions = mapping(
                         predictions,
-                        self.config['Model']['Mapping']['test_time_mapping'],
+                        self.config['Model']['test_time_mapping'],
                         [attribute['name'] for attribute in self.config['mapping']]
                     )
 
