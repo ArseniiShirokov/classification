@@ -22,7 +22,7 @@ def rand_bbox(size, lam):
 
 
 def mixed_criterion(criterion, pred, y_a, y_b, lam):
-    return lam * criterion(pred, y_a) + (1 - lam) * criterion(pred, y_b)
+    return lam * criterion(pred, y_a.to(pred.device)) + (1 - lam) * criterion(pred, y_b.to(pred.device))
 
 
 class CutMix:
