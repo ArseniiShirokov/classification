@@ -65,7 +65,7 @@ class Trainer:
         self.total_batchsize = self.device_batchsize * self.world_size
         self.start_epoch = 0
         self.end_epoch = self.config['Parameters']['num epochs']
-        self.mixUp = get_transform(self.config['MixUp'], self.model, self.criterion)
+        self.mixUp = get_transform(self.config['Model']['MixUp'], self.model, self.criterion)
 
     def _init_data_iterators(self) -> None:
         self.train_iter, self.val_iter, self.weights = get_data_iterators(self.config, self.data)
