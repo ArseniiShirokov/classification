@@ -26,6 +26,8 @@ class Evaluator:
         params = os.path.join(self.save_dir, 'best_model.params')
         checkpoint = torch.load(params)
         self.model.load_state_dict(checkpoint["state_dict"])
+        self.model.cuda()
+        self.model.eval()
 
     def _init_dataloader(self) -> None:
         self.test_dataloaders = {}
