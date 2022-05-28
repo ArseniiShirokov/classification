@@ -37,7 +37,8 @@ class Evaluator:
     def _init_save_dataframe(self):
         columns = [f"{attribute}_pr" for attribute in self.attributes] + \
                   [f"{attribute}_gt" for attribute in self.attributes]
-        self.results = pd.DataFrame(columns=columns, dtype=object)
+        self.results = {dataset['name']: pd.DataFrame(columns=columns, dtype=object)
+                        for dataset in self.datasets}
 
     def _init_dataloader(self) -> None:
         self.test_dataloaders = {}
@@ -80,8 +81,8 @@ class Evaluator:
                         gts[j].append(labels[j][i])
                 for i in outputs:
                     row = list(map(str, outputs[i])) + list(map(str, gts[i]))
-                    self.results.loc[len(self.results.index)] = row
-        self.results.to_csv(f"{self.save_dir}/results.csv")
+                    self.results[test_name].loc[len(self.results[test_name].index)] = row
+            self.results[test_name].to_csv(f"{self.save_dir}/{test_name}.csv")
 
 
 @hydra.main(version_base=None, config_path="configs", config_name="config")
