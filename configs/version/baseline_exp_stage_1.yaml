@@ -3,15 +3,6 @@ defaults:
 
 Name: baseline_exp_stage_1
 
-Data:
-  data directory: /workspace/data
-
-  train dataset: attributes_train
-  val dataset: val_att4_final_1_color_mapping
-  test datasets:
-    - name: metro_test_att4
-    - name: summer_test
-
 Model:
   architecture:
     name: Mbnet

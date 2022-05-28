@@ -9,13 +9,13 @@ import numpy as np
 import torch
 
 
-def get_data_iterators(config: DictConfig) -> Tuple:
+def get_data_iterators(config: DictConfig, data: DictConfig) -> Tuple:
     val_enabled = 'val dataset' in config['Data']
     # Set aug transformations
     transform_train = get_aug(config['Transform'], 'train')
     simple_transform = get_aug(config['Transform'], 'test')
     # Create train dataset
-    dataset_train = TrainDataset(config['Data']['data directory'] + '/' + config['Data']['train dataset'],
+    dataset_train = TrainDataset(data['data directory'] + '/' + data['train dataset'],
                                  config['mapping'], config['Transform']['jsd']['enabled'],
                                  simple_transform=simple_transform, transform=transform_train)
     # Get sampler: oversampling or None
@@ -32,7 +32,7 @@ def get_data_iterators(config: DictConfig) -> Tuple:
         # Set aug transformations
         transform_val = get_aug(config['Transform'], 'val')
         # Create val dataset
-        dataset_val = TestDataset(config['Data']['data directory'] + '/' + config['Data']['val dataset'],
+        dataset_val = TestDataset(data['data directory'] + '/' + data['val dataset'],
                                   config['mapping'], transform=transform_val)
         # Get sampler: oversampling or None
         val_sampler = get_sampler(config, dataset_val, 'val')
@@ -42,12 +42,12 @@ def get_data_iterators(config: DictConfig) -> Tuple:
         val_iter = DataLoader(dataset_val, sampler=val_sampler,
                               batch_size=config['Parameters']['batch size'], num_workers=1, shuffle=val_shuffle)
 
-    weights = get_weights(config)
+    weights = get_weights(config, data)
     return train_iter, val_iter, weights
 
 
-def get_weights(config: DictConfig, no_clip=False):
-    train_data = pd.read_csv(config['Data']['data directory'] + '/' + config['Data']['train dataset'] + '.csv')
+def get_weights(config: DictConfig, data: DictConfig,no_clip=False):
+    train_data = pd.read_csv(data['data directory'] + '/' + data['train dataset'] + '.csv')
     attributes = config['mapping']
 
     for i, attribute in enumerate(attributes):

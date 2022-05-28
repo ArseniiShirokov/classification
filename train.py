@@ -27,84 +27,84 @@ import os
 
 
 class Trainer:
-    def __init__(self, rank: int, config: DictConfig, wandb: DictConfig, world_size: int) -> None:
-        self.use_jsd = config['Transform']['jsd']['enabled']
-        self.attributes = [attribute['name'] for attribute in config['mapping']]
-        self.config = config
-        self._init_ddp(rank, config, world_size)
+    def __init__(self, rank: int, config: DictConfig, world_size: int) -> None:
+        self._init_loggers(config, config['Wandb'])
+        self.config = config['version']
+        self.data = config["Data"]
+        self.use_jsd = self.config['Transform']['jsd']['enabled']
+        self.attributes = [attribute['name'] for attribute in self.config['mapping']]
+        self._init_ddp(rank, world_size)
         # if we want full reproducible, deterministic results
-        if config['Parameters']['deterministic']:
+        if self.config['Parameters']['deterministic']:
             self._init_random_seed(42 + rank)
-        self._init_loggers(config, wandb)
-        self._init_training_params(config)
+        self._init_training_params()
         self.train()
 
     # ============== Initialization helpers ==============
-    def _init_ddp(self, rank: int, config: DictConfig, world_size: int) -> None:
+    def _init_ddp(self, rank: int, world_size: int) -> None:
         self.rank = rank
         self.world_size = world_size
-        dist.init_process_group(backend=config['Parameters']['ddp backend'],
+        dist.init_process_group(backend=self.config['Parameters']['ddp backend'],
                                 rank=self.rank,
                                 world_size=self.world_size)
 
-    def _init_training_params(self, config: DictConfig) -> None:
-        self.attributes_cnt = len(config['mapping'])
-        self._init_data_iterators(config)
-        self._init_criterion(config)
-        self._init_model(config)
-        self._init_optimizer(config)
-
+    def _init_training_params(self) -> None:
+        self.attributes_cnt = len(self.config['mapping'])
+        self._init_data_iterators()
+        self._init_criterion()
+        self._init_model()
+        self._init_optimizer()
         self.best_epoch = 0
         self.current_best_loss = None
-        self.save_dir = config['Experiment']["logs directory"]
-        self.display_period = config['Experiment']['display period']
-        self.device_ids = config['Parameters']['context device ids']
-        self.device_batchsize = config['Parameters']['batch size']
+        self.save_dir = self.config['Experiment']["logs directory"]
+        self.display_period = self.config['Experiment']['display period']
+        self.device_ids = self.config['Parameters']['context device ids']
+        self.device_batchsize = self.config['Parameters']['batch size']
         self.total_batchsize = self.device_batchsize * self.world_size
         self.start_epoch = 0
-        self.end_epoch = config['Parameters']['num epochs']
+        self.end_epoch = self.config['Parameters']['num epochs']
 
-    def _init_data_iterators(self, config: DictConfig) -> None:
-        self.train_iter, self.val_iter, self.weights = get_data_iterators(config)
+    def _init_data_iterators(self) -> None:
+        self.train_iter, self.val_iter, self.weights = get_data_iterators(self.config, self.data)
         self.train_iter_len = len(self.train_iter)
         if self.val_iter:
             self.val_iter_len = len(self.val_iter)
 
     def _init_loggers(self, config: DictConfig, wandb: DictConfig) -> None:
-        self.save_dir = config['Experiment']['logs directory']
+        self.save_dir = self.config['Experiment']['logs directory']
         save_config(config)
         if self.rank == 0:
             self.logger = Logger(self.save_dir)
             self.wandb = get_wandb_logger(wandb)
 
-    def _init_criterion(self, config: DictConfig) -> None:
+    def _init_criterion(self) -> None:
         weights = []
         for i, weight in enumerate(self.weights):
-            new = weight.to(self.rank) if config['Model']['loss']['weights'] else None
+            new = weight.to(self.rank) if self.config['Model']['loss']['weights'] else None
             weights.append(new)
-        loss = config['Model']['loss']
+        loss = self.config['Model']['loss']
         self.criterion = [get_loss(loss, weights[i]) for i in range(self.attributes_cnt)]
 
-    def _init_model(self, config: DictConfig) -> None:
-        model = get_model(config['Model']['architecture'], classes=config['mapping'])
-        self.checkpoint_model = get_model(config['Model']['architecture'], classes=config['mapping'])
+    def _init_model(self) -> None:
+        model = get_model(self.config['Model']['architecture'], classes=self.config['mapping'])
+        self.checkpoint_model = get_model(self.config['Model']['architecture'], classes=self.config['mapping'])
         # Freeze backbone
         for module in [model.backbone]:
             for name, param in module.named_parameters():
-                param.requires_grad = not config['Model']['architecture']['freeze']
+                param.requires_grad = not self.config['Model']['architecture']['freeze']
         # DDP
         model = model.to(self.rank)
         self.model = DDP(model, device_ids=[self.rank])
 
-    def _init_optimizer(self, config: DictConfig) -> None:
+    def _init_optimizer(self) -> None:
         model_named_params = self.model.named_parameters()
         # Mixed precision
-        self.amp = config['Parameters']['amp']
+        self.amp = self.config['Parameters']['amp']
         # Create optimizer, lr-scheduler, and amp-grad-scaler
         self.optimizer = get_optimizer(model_named_params,
-                                       config['Parameters'])
+                                       self.config['Parameters'])
         self.scheduler = get_scheduler(self.optimizer,
-                                       config['Parameters']['scheduler'])
+                                       self.config['Parameters']['scheduler'])
         self.scaler = torch.cuda.amp.GradScaler(enabled=self.amp)
 
     @staticmethod
@@ -252,9 +252,6 @@ class Trainer:
 
 @hydra.main(version_base=None, config_path="configs", config_name="config")
 def start_train(cfg: DictConfig) -> None:
-    wandb = cfg['Wandb']
-    cfg = cfg['version']
-
     # Create dir to save exps
     if os.path.exists(cfg['Experiment']['logs directory']):
         val = input("Warning! Dir is exists, continue? y/n \n")
@@ -271,7 +268,7 @@ def start_train(cfg: DictConfig) -> None:
     trainer = Trainer
     world_size = len(cfg['Parameters']['context device ids'])
     torch.multiprocessing.spawn(trainer,
-                                args=(cfg, wandb, world_size,),
+                                args=(cfg, world_size,),
                                 nprocs=world_size,
                                 join=True
                                 )

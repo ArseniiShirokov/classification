@@ -8,6 +8,15 @@ hydra:
   run:
     dir: outputs/${version.Name}/${now:%Y-%m-%d_%H-%M-%S}
 
+Data:
+  data directory: /workspace/data
+
+  train dataset: attributes_train
+  val dataset: val_att4_final_1_color_mapping
+  test datasets:
+    - name: metro_test_att4
+    - name: summer_test
+
 Wandb:
   enabled: false
   account_key: '3bff8c661180b6af3727e36c470dd033e785414c'
