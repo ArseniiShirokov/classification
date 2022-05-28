@@ -76,7 +76,7 @@ class Evaluator:
                 for i, attribute in enumerate(self.attributes):
                     pr_label = torch.argmax(predictions[i].to(torch.device('cpu')), dim=1).tolist()
                     for j, val in enumerate(pr_label):
-                        outputs[j].append(val.item())
+                        outputs[j].append(val)
                         gts[j].append(labels[j][i].item())
                 for i in outputs:
                     row = outputs[i] + gts[i]
