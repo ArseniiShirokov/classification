@@ -28,6 +28,7 @@ import os
 
 class Trainer:
     def __init__(self, rank: int, config: DictConfig, world_size: int) -> None:
+        self.rank = rank
         self._init_loggers(config, config['Wandb'])
         self.config = config['version']
         self.data = config["Data"]
