@@ -7,7 +7,9 @@ Model:
   architecture:
     name: Mbnet
     freeze: false
-    init: ReID
+    init:
+      - type: pretrain
+      - path: 'pretrained/mobilenetV2_reid_200x200.pth'
     activation type: prelu
     output_type: 'Demography'
     in_channels: 1280

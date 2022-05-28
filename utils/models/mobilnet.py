@@ -155,10 +155,10 @@ class MobileNet(nn.Module):
         return x
 
 
-def get_mobilenet(weights="ImageNet"):
+def get_mobilenet(weights):
     backbone_weights = None
-    if weights == "ReID":
-        print("ReID weights loaded")
-        backbone_path = 'pretrained/mobilenetV2_reid_200x200.pth'
+    if weights['type'] == "pretrain":
+        print("pretrain weights loaded")
+        backbone_path = weights['path']
         backbone_weights = torch.load(backbone_path)
     return MobileNet(backbone_weights)
