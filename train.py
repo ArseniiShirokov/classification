@@ -65,7 +65,7 @@ class Trainer:
         self.total_batchsize = self.device_batchsize * self.world_size
         self.start_epoch = 0
         self.end_epoch = self.config['Parameters']['num epochs']
-        self.mixUp = get_transform(self.config['Model']['MixUp'], self.model, self.criterion)
+        self.mixUp = get_transform(self.config['Model']['MixUp'])
 
     def _init_data_iterators(self) -> None:
         self.train_iter, self.val_iter, self.weights = get_data_iterators(self.config, self.data)
@@ -211,7 +211,7 @@ class Trainer:
                 mask = [i for i, attribute in enumerate(self.attributes) if attribute in with_jsd_att]
                 return jsd_forward(self.model, data, labels, self.criterion, mask)
             elif self.mixUp is not None:
-                return self.mixUp.apply(data, self.criterion)
+                return self.mixUp.apply(self.model, data, labels, self.criterion)
             else:
                 return simple_forward(self.model, data, labels, self.criterion)
 
