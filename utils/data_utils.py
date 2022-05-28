@@ -10,7 +10,7 @@ import torch
 
 
 def get_data_iterators(config: DictConfig, data: DictConfig) -> Tuple:
-    val_enabled = 'val dataset' in config['Data']
+    val_enabled = 'val dataset' in data
     # Set aug transformations
     transform_train = get_aug(config['Transform'], 'train')
     simple_transform = get_aug(config['Transform'], 'test')
