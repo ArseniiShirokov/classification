@@ -25,7 +25,7 @@
     - Есть
     - Нет
 
-- length: 4
+- length: 5
   name: Hair_color # Цвет волос
   values:
     - Лысый
@@ -53,7 +53,7 @@
     - Есть
     - Нет
 
-- length: 12
+- length: 15
   name: Main_Color # Цвет одежды
   values:
     - Черный
