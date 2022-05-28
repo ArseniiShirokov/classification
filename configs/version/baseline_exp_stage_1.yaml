@@ -18,7 +18,7 @@ Model:
     val: False
 
   test_time_mapping: ["Main_Color"]
-  thresholding: False
+  MixUp: MixUp # CutMix
 
   loss:
     name: CrossEntropy
