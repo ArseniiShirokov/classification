@@ -210,6 +210,8 @@ class Trainer:
                 with_jsd_att = self.config['Transform']['jsd']['attributes']
                 mask = [i for i, attribute in enumerate(self.attributes) if attribute in with_jsd_att]
                 return jsd_forward(self.model, data, labels, self.criterion, mask)
+            elif self.mixUp is not None:
+                return self.mixUp.apply(data, self.criterion)
             else:
                 return simple_forward(self.model, data, labels, self.criterion)
 

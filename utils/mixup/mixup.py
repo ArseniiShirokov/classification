@@ -26,7 +26,7 @@ def mixed_criterion(criterion, pred, y_a, y_b, lam):
 
 
 class CutMix:
-    def __init__(self, model, criterion, betta = 1.0):
+    def __init__(self, model, criterion, betta=1.0):
         self.betta = betta
         self.model = model
         self.criterion = criterion
@@ -49,7 +49,7 @@ class CutMix:
 
 
 class MixUp:
-    def __init__(self, model, criterion, betta = 1.0):
+    def __init__(self, model, criterion, betta=1.0):
         self.betta = betta
         self.model = model
         self.criterion = criterion
