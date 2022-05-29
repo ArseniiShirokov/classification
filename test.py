@@ -35,6 +35,7 @@ class Evaluator:
 
     def _init_save_dataframe(self):
         columns = [f"{attribute}_pr" for attribute in self.attributes] + \
+                  [f"{attribute}_conf" for attribute in self.attributes] + \
                   [f"{attribute}_gt" for attribute in self.attributes]
         self.results = {dataset['name']: pd.DataFrame(columns=columns, dtype=object)
                         for dataset in self.datasets}
@@ -56,6 +57,7 @@ class Evaluator:
             }
 
     def evaluate(self) -> None:
+        softmax = torch.nn.Softmax(dim=1)
         for test_name in self.test_dataloaders:
             loader = self.test_dataloaders[test_name]['loader']
             iters = self.test_dataloaders[test_name]['iters']
@@ -72,14 +74,17 @@ class Evaluator:
                         self.attributes
                     )
                 outputs = defaultdict(list)
+                confidences = defaultdict(list)
                 gts = defaultdict(list)
                 for i, attribute in enumerate(self.attributes):
                     pr_label = torch.argmax(predictions[i].to(torch.device('cpu')), dim=1).tolist()
+                    confidence = torch.max(softmax(predictions[i]).to(torch.device('cpu')), dim=1).values.tolist()
                     for j, val in enumerate(pr_label):
                         outputs[j].append(val)
+                        confidences[j].append(confidence[j])
                         gts[j].append(labels[j][i].item())
                 for i in outputs:
-                    row = outputs[i] + gts[i]
+                    row = outputs[i] + confidences[i] + gts[i]
                     self.results[test_name].loc[len(self.results[test_name].index)] = row
             self.results[test_name].to_csv(f"{self.save_dir}/{test_name}.csv")
 
