@@ -5,20 +5,19 @@ from utils.optimizer import get_optimizer
 from utils.optimizer import get_scheduler
 from utils.logger import log_losses
 from utils.logger import get_wandb_logger
-from utils.logger import save_config
 from utils.models import get_model
 from utils.losses import get_loss
-from omegaconf import DictConfig
+from omegaconf import DictConfig, open_dict
 import torch.distributed as dist
 from utils.mixup import get_transform
 from utils.logger import Logger
 from utils.logger import save_module_state
 from utils.logger import save_best_model
 from typing import Tuple
+from hydra.utils import get_original_cwd
 from utils.forwards import simple_forward
 from utils.forwards import jsd_forward
 import random
-import shutil
 import numpy
 import hydra
 import torch
@@ -75,7 +74,6 @@ class Trainer:
 
     def _init_loggers(self, config: DictConfig, wandb: DictConfig) -> None:
         self.save_dir = config['version']['Experiment']['logs directory']
-        save_config(config)
         if self.rank == 0:
             self.logger = Logger(self.save_dir)
             self.wandb = get_wandb_logger(wandb)
@@ -257,14 +255,10 @@ class Trainer:
 
 @hydra.main(version_base=None, config_path="configs", config_name="config")
 def start_train(cfg: DictConfig) -> None:
-    # Create dir to save exps
-    if os.path.exists(cfg['version']['Experiment']['logs directory']):
-        val = input("Warning! Dir is exists, continue? y/n \n")
-        if val != 'y':
-            return
-        shutil.rmtree(cfg['version']['Experiment']['logs directory'])
-    os.makedirs(cfg['version']['Experiment']['logs directory'])
-
+    # Set dir to save exps
+    with open_dict(cfg):
+        cfg['version']['Experiment']['logs directory'] = os.getcwd()
+        os.chdir(get_original_cwd())
     # Do some preparation stuff for DistributedDataParallel
     os.environ['MASTER_ADDR'] = 'localhost'
     os.environ['MASTER_PORT'] = '8888'

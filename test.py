@@ -1,7 +1,9 @@
 from collections import defaultdict
+
+from hydra.utils import get_original_cwd
 from sklearn.metrics import balanced_accuracy_score
 import hydra
-from omegaconf import DictConfig
+from omegaconf import DictConfig, open_dict
 from utils.augmentation import get_aug
 from utils.data_utils import TestDataset, DataLoader
 from utils.batch_samplers import get_sampler
@@ -105,6 +107,12 @@ class Evaluator:
 
 @hydra.main(version_base=None, config_path="configs", config_name="config")
 def start_test(cfg: DictConfig) -> None:
+    # Set dir to save exps
+    # Set dir to save exps
+    if 'logs directory' not in cfg['version']['Experiment']:
+        with open_dict(cfg):
+            cfg['version']['Experiment']['logs directory'] = os.getcwd()
+            os.chdir(get_original_cwd())
     tester = Evaluator(cfg)
     tester.evaluate()
     tester.compute_metrics()

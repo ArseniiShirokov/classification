@@ -72,5 +72,4 @@ Parameters:
 
 
 Experiment:
-    logs directory: Results/baseline_exp_stage_1
     display period: 20

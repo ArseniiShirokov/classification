@@ -6,7 +6,12 @@ defaults:
 
 hydra:
   run:
-    dir: outputs/${version.Name}/${now:%Y-%m-%d_%H-%M-%S}
+    dir: outputs/${version.Name}
+  sweep:
+    dir: outputs/${version.Name}
+    subdir: ${hydra.job.override_dirname}
+  job:
+    chdir: True
 
 Data:
   data directory: /workspace/data
